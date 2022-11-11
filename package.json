@@ -20,10 +20,23 @@
         "protocol-resolver.protocols": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "object",
+            "title": "Protocol",
+            "properties": {
+              "protocol": {
+                "type": "string",
+                "description": "Protocol name"
+              },
+              "autoRemoveProjectPrefix": {
+                "type": "boolean",
+                "description": "Remove project prefix from the path automatically",
+                "default": false
+              }
+            },
+            "required": ["protocol"]
           },
           "default": [
-            "webpack"
+            { "protocol": "webpack", "autoRemoveProjectPrefix": true }
           ],
           "description": "Protocols to handle for the terminal links"
         }

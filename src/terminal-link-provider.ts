@@ -9,6 +9,13 @@ interface CustomLink {
 	colIndex: number;
 }
 
+interface ProtocolItem {
+	protocol: string;
+	autoRemoveProjectPrefix: boolean;
+}
+
+const defaultWebpackProtocol: ProtocolItem = { protocol: 'webpack', autoRemoveProjectPrefix: true };
+
 export interface CustomTerminalLinkProviderOptions {
 	extensionId: string;
 }
@@ -22,28 +29,37 @@ export class CustomTerminalLinkProvider implements vscode.TerminalLinkProvider {
 
 	provideTerminalLinks(context: vscode.TerminalLinkContext, token: vscode.CancellationToken) {
 		const config = vscode.workspace.getConfiguration(this.extensionIdentifier);
-		const protocols = config?.get<string[]>('protocols') ||['webpack'];
+		const protocolItems = config?.get<ProtocolItem[]>('protocols') || [defaultWebpackProtocol];
+		const protocols = protocolItems.map(item => item.protocol);
         // keep the hardcoded regex here for a reference
-		// const regex = /webpack:\/\/([^\.]{1,4096}\.\w{1,8})(:\d{1,8})?(:\d{1,8})?/g;
-		const regex = new RegExp(`(?:${protocols.join('|')}):\/\/([^\\.]{1,4096}\\.\\w{1,8})(:\\d{1,8})?(:\\d{1,8})?`, 'g');
+		// const regex = /(webpack):\/\/([^\.]{1,4096}\.\w{1,8})(:\d{1,8})?(:\d{1,8})?/g;
+		const regex = new RegExp(`(${protocols.join('|')}):\/\/([^\\.]{1,4096}\\.\\w{1,8})(:\\d{1,8})?(:\\d{1,8})?`, 'g');
 		const matches = [...context.line.matchAll(regex)];
 		if (matches.length === 0) {
 			return [];
 		}
+		const settings = protocolItems.reduce((acc, cur) => {
+			acc[cur.protocol] = cur;
+			return acc;
+		}, { } as { [protocol: string]: ProtocolItem });
 		return matches.map(m => {
 			let lineIndex = 0;
 			let colIndex = 0;
-			if (m[2]) {
-				lineIndex = parseInt(m[2].slice(1)) - 1;
-			}
 			if (m[3]) {
-				colIndex = parseInt(m[3].slice(1)) - 1;
+				lineIndex = parseInt(m[3].slice(1)) - 1;
+			}
+			if (m[4]) {
+				colIndex = parseInt(m[4].slice(1)) - 1;
+			}
+			let file = m[2];
+			if (settings[m[1]].autoRemoveProjectPrefix) {
+				file = file.replace(/^[^\/]+\//, '');
 			}
 			return {
 				startIndex: m.index || 0,
 				length: m[0].length,
 				tooltip: 'Open file',
-				file: m[1],
+				file,
 				lineIndex,
 				colIndex,
 			};
@@ -52,7 +68,6 @@ export class CustomTerminalLinkProvider implements vscode.TerminalLinkProvider {
 
 	handleTerminalLink(link: CustomLink) {
 		const workspacePath = vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders[0].uri.fsPath;
-		console.log(workspacePath);
 		if (!workspacePath) {
 			return;
 		}
