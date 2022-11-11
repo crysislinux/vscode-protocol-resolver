@@ -54,5 +54,6 @@
   "repository": {
     "url": "https://github.com/crysislinux/vscode-protocol-resolver.git"
   },
-  "publisher": "crysislinux"
+  "publisher": "crysislinux",
+  "icon": "logo.png"
 }
