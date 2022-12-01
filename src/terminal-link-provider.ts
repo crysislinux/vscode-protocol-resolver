@@ -32,8 +32,8 @@ export class CustomTerminalLinkProvider implements vscode.TerminalLinkProvider {
 		const protocolItems = config?.get<ProtocolItem[]>('protocols') || [defaultWebpackProtocol];
 		const protocols = protocolItems.map(item => item.protocol);
         // keep the hardcoded regex here for a reference
-		// const regex = /(webpack):\/\/([^\.]{1,4096}\.\w{1,8})(:\d{1,8})?(:\d{1,8})?/g;
-		const regex = new RegExp(`(${protocols.join('|')}):\/\/([^\\.]{1,4096}\\.\\w{1,8})(:\\d{1,8})?(:\\d{1,8})?`, 'g');
+		// const regex = /(webpack):\/?\/([\w\-_.$\/]{1,4096}\.(?:ts|js|mjs))(:\d{1,8})?(:\d{1,8})?/g;
+		const regex = new RegExp(`(${protocols.join('|')}):\/?\/([\\w\\-_.$\\/]{1,4096}\\.(?:ts|js|mjs))(:\\d{1,8})?(:\\d{1,8})?`, 'g');
 		const matches = [...context.line.matchAll(regex)];
 		if (matches.length === 0) {
 			return [];
